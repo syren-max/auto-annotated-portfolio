@@ -1,49 +1,50 @@
-import Apple from './apple';
-import ArrowLeft from './arrow-left';
-import ArrowLeftCircle from './arrow-left-circle';
-import ArrowRight from './arrow-right';
-import ArrowRightCircle from './arrow-right-circle';
-import ArrowUpLeft from './arrow-up-left';
-import ArrowUpRight from './arrow-up-right';
-import Cart from './cart';
-import ChevronLeft from './chevron-left';
-import ChevronRight from './chevron-right';
-import Facebook from './facebook';
-import GitHub from './github';
-import GooglePlay from './google-play';
-import Instagram from './instagram';
-import LinkedIn from './linkedin';
-import Mail from './mail';
-import Play from './play';
-import PlayCircle from './play-circle';
-import Reddit from './reddit';
-import Send from './send';
-import Twitter from './twitter';
-import Vimeo from './vimeo';
-import YouTube from './youtube';
+import { useState } from 'react';
 
-export const iconMap = {
-    apple: Apple,
-    arrowLeft: ArrowLeft,
-    arrowLeftCircle: ArrowLeftCircle,
-    arrowRight: ArrowRight,
-    arrowRightCircle: ArrowRightCircle,
-    arrowUpLeft: ArrowUpLeft,
-    arrowUpRight: ArrowUpRight,
-    cart: Cart,
-    chevronLeft: ChevronLeft,
-    chevronRight: ChevronRight,
-    facebook: Facebook,
-    github: GitHub,
-    googlePlay: GooglePlay,
-    instagram: Instagram,
-    linkedin: LinkedIn,
-    mail: Mail,
-    play: Play,
-    playCircle: PlayCircle,
-    reddit: Reddit,
-    send: Send,
-    twitter: Twitter,
-    vimeo: Vimeo,
-    youtube: YouTube
-};
+export default function Home() {
+  const [userInput, setUserInput] = useState(''); // Для хранения текста пользователя
+  const [messages, setMessages] = useState([]); // Для хранения сообщений чата
+
+  const handleSendMessage = async () => {
+    if (userInput.trim() === '') return;
+
+    // Отображаем сообщение пользователя
+    setMessages([...messages, { text: userInput, sender: 'user' }]);
+    setUserInput(''); // Очищаем поле ввода
+
+    // Отправляем запрос к OpenAI API
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: userInput }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const data = await response.json();
+    setMessages([
+      ...messages,
+      { text: userInput, sender: 'user' },
+      { text: data.reply, sender: 'ai' }, // Ответ ИИ
+    ]);
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <div id="chat-container">
+        <div id="messages" style={{ marginBottom: '20px', height: '300px', overflowY: 'scroll' }}>
+          {messages.map((msg, index) => (
+            <div key={index} style={{ padding: '5px' }}>
+              <strong>{msg.sender === 'user' ? 'Вы' : 'ИИ'}:</strong> {msg.text}
+            </div>
+          ))}
+        </div>
+        <input
+          type="text"
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          placeholder="Задайте вопрос..."
+          style={{ padding: '10px', width: 'calc(100% - 100px)' }}
+        />
+        <button onClick={handleSendMessage} style={{ padding: '10px 20px' }}>Отправить</button>
+      </div>
+    </div>
+  );
+}
